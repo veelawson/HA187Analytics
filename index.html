@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergent Metrics · Social Media Analytics Workbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#F7F6F2; --card:#FFFFFF; --ink:#1B2432; --muted:#6B7280;
+  --blue:#0055A2; --blue-deep:#003D75; --gold:#E5A823; --gold-soft:#FBEED0;
+  --line:#DDD9CE; --ok:#2E7D4F; --danger:#B3402A;
+  --ig:#C13584; --tt:#14B8C4; --yt:#C4302B; --li:#0A66C2;
+  --radius:10px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{font-size:16px;}
+body{
+  font-family:'Archivo',system-ui,sans-serif;
+  font-variation-settings:'wdth' 100;
+  background:var(--paper); color:var(--ink); line-height:1.5;
+  min-height:100vh;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- header ---------- */
+header{
+  background:var(--ink); color:#fff;
+  padding:0 1.25rem;
+  position:sticky; top:0; z-index:50;
+}
+.header-inner{
+  max-width:1100px; margin:0 auto;
+  display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;
+  padding:.85rem 0 0;
+}
+.wordmark{display:flex; flex-direction:column; padding-bottom:.85rem;}
+.wordmark .name{
+  font-weight:800; font-size:1.15rem; letter-spacing:.01em;
+  font-variation-settings:'wdth' 118;
+}
+.wordmark .name em{font-style:normal; color:var(--gold);}
+.wordmark .sub{font-size:.72rem; color:#B9C0CE; letter-spacing:.08em; text-transform:uppercase;}
+nav{display:flex; gap:.25rem; margin-left:auto; flex-wrap:wrap;}
+nav button{
+  appearance:none; background:none; border:none; color:#C7CCD6;
+  font:inherit; font-weight:600; font-size:.92rem;
+  padding:.9rem .85rem; cursor:pointer;
+  border-bottom:3px solid transparent;
+}
+nav button:hover{color:#fff;}
+nav button.active{color:#fff; border-bottom-color:var(--gold);}
+nav button:focus-visible{outline:2px solid var(--gold); outline-offset:-2px;}
+
+main{max-width:1100px; margin:0 auto; padding:1.5rem 1.25rem 4rem;}
+.view{display:none;}
+.view.active{display:block;}
+
+h2{
+  font-size:1.5rem; font-weight:800; font-variation-settings:'wdth' 112;
+  margin-bottom:.25rem;
+}
+.view-intro{color:var(--muted); margin-bottom:1.5rem; max-width:60ch;}
+
+/* ---------- cards & layout ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:1.25rem; margin-bottom:1.25rem;
+}
+.card h3{
+  font-size:.8rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.9rem;
+}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;}
+.grid-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem;}
+@media(max-width:760px){.grid-2{grid-template-columns:1fr;}}
+
+.stat{padding:.25rem 0;}
+.stat .label{font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
+.stat .value{
+  font-family:'IBM Plex Mono',monospace; font-size:1.7rem; font-weight:600;
+  line-height:1.2;
+}
+.stat .delta{font-size:.8rem; font-family:'IBM Plex Mono',monospace;}
+.delta.up{color:var(--ok);} .delta.down{color:var(--danger);}
+.hl{background:linear-gradient(transparent 62%, var(--gold-soft) 62%); padding:0 .1em;}
+
+/* ---------- platform chips ---------- */
+.chips{display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem;}
+.chip{
+  border:1.5px solid var(--line); background:var(--card); border-radius:999px;
+  padding:.35rem .9rem; font:inherit; font-size:.85rem; font-weight:600;
+  cursor:pointer; display:flex; align-items:center; gap:.45rem; color:var(--ink);
+}
+.chip .dot{width:.6rem; height:.6rem; border-radius:50%;}
+.chip.on{border-color:var(--ink); background:var(--ink); color:#fff;}
+.chip:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
+
+/* ---------- forms ---------- */
+.mode-switch{display:flex; gap:0; margin-bottom:1.25rem; border:1.5px solid var(--ink); border-radius:8px; overflow:hidden; width:max-content; max-width:100%;}
+.mode-switch button{
+  appearance:none; border:none; background:var(--card); color:var(--ink);
+  font:inherit; font-weight:600; font-size:.9rem; padding:.55rem 1.1rem; cursor:pointer;
+}
+.mode-switch button.on{background:var(--ink); color:#fff;}
+form .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.9rem; margin-bottom:.9rem;}
+label{display:block; font-size:.78rem; font-weight:600; letter-spacing:.03em; color:var(--ink); margin-bottom:.25rem;}
+label .hint{font-weight:400; color:var(--muted);}
+input,select{
+  width:100%; font:inherit; font-size:.95rem; padding:.5rem .6rem;
+  border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink);
+}
+input:focus,select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue);}
+input[type=number]{font-family:'IBM Plex Mono',monospace;}
+
+/* signature: live rate ledger */
+.rate-ledger{
+  font-family:'IBM Plex Mono',monospace; font-size:.9rem;
+  background:var(--paper); border:1px dashed var(--line); border-radius:8px;
+  padding:.8rem 1rem; margin:.5rem 0 1rem; overflow-x:auto; white-space:nowrap;
+}
+.rate-ledger .op{color:var(--muted);}
+.rate-ledger .result{font-weight:600; background:linear-gradient(transparent 55%, var(--gold-soft) 55%); padding:0 .15em;}
+
+.btn{
+  appearance:none; font:inherit; font-weight:700; font-size:.92rem;
+  background:var(--blue); color:#fff; border:none; border-radius:8px;
+  padding:.65rem 1.4rem; cursor:pointer;
+}
+.btn:hover{background:var(--blue-deep);}
+.btn:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
+.btn.ghost{background:none; color:var(--blue); border:1.5px solid var(--blue);}
+.btn.ghost:hover{background:var(--blue); color:#fff;}
+.btn.small{padding:.4rem .9rem; font-size:.82rem;}
+.btn.danger{background:none; border:none; color:var(--danger); font-weight:600; font-size:.82rem; padding:.2rem .4rem;}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:.88rem;}
+th{
+  text-align:left; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; padding:.5rem .6rem; border-bottom:2px solid var(--line);
+  white-space:nowrap;
+}
+td{padding:.55rem .6rem; border-bottom:1px solid var(--line); white-space:nowrap;}
+td.num{font-family:'IBM Plex Mono',monospace; text-align:right;}
+th.num{text-align:right;}
+.pill{
+  display:inline-flex; align-items:center; gap:.35rem; font-size:.78rem; font-weight:600;
+  padding:.15rem .6rem; border-radius:999px; border:1px solid var(--line);
+}
+.pill .dot{width:.5rem; height:.5rem; border-radius:50%;}
+
+.empty{
+  text-align:center; color:var(--muted); padding:2.5rem 1rem; font-size:.95rem;
+}
+.empty strong{color:var(--ink);}
+
+.chart-box{position:relative; height:280px;}
+.toast{
+  position:fixed; bottom:1.25rem; left:50%; transform:translateX(-50%);
+  background:var(--ink); color:#fff; padding:.6rem 1.2rem; border-radius:8px;
+  font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .25s; z-index:100;
+}
+.toast.show{opacity:1;}
+
+.sync-btn{
+  display:flex; align-items:center; gap:.45rem; align-self:center;
+  background:none; border:1px solid #3A4356; color:#C7CCD6; border-radius:999px;
+  padding:.35rem .85rem; font:inherit; font-size:.78rem; font-weight:600; cursor:pointer;
+  margin:.5rem 0 .85rem;
+}
+.sync-btn:hover{color:#fff; border-color:#C7CCD6;}
+.sync-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+.sync-btn .dot{width:.55rem; height:.55rem; border-radius:50%; background:#8A93A5;}
+.sync-btn.ok .dot{background:#4CAF7D;}
+.sync-btn.err .dot{background:#E07856;}
+.sync-btn.busy .dot{background:var(--gold);}
+#sync-panel{display:none;}
+#sync-panel.open{display:block;}
+#sync-msg{font-size:.85rem; color:var(--muted); margin-top:.6rem;}
+
+/* ---------- calendar ---------- */
+.cal-head{display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem;}
+.cal-head .month{font-weight:800; font-size:1.05rem; font-variation-settings:'wdth' 112; min-width:12ch; text-align:center;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+.cal-dow{font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); text-align:center; padding:.25rem 0;}
+.cal-cell{background:var(--card); border:1px solid var(--line); border-radius:6px; min-height:88px; padding:.3rem; overflow:hidden;}
+.cal-cell.blank{background:none; border:none;}
+.cal-cell .d{font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--muted);}
+.cal-cell.today .d{background:var(--gold); color:var(--ink); border-radius:4px; padding:0 .35em; font-weight:600;}
+.cal-item{
+  display:block; width:100%; text-align:left; border:none; cursor:pointer;
+  border-radius:4px; padding:.18rem .35rem; margin-top:.25rem;
+  font-family:inherit; font-size:.66rem; font-weight:600; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cal-item:focus-visible{outline:2px solid var(--ink); outline-offset:1px;}
+@media(max-width:640px){ .cal-cell{min-height:58px;} .cal-item{font-size:.58rem; padding:.12rem .25rem;} }
+.tag{
+  display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.03em;
+  padding:.1rem .55rem; border-radius:999px; border:1.5px solid;
+}
+.tag.idea{color:var(--muted); border-color:var(--line);}
+.tag.drafted{color:#8A6800; border-color:var(--gold);}
+.tag.filmed{color:var(--blue); border-color:var(--blue);}
+.tag.approved{color:#0E7C86; border-color:#0E7C86;}
+.tag.posted{color:var(--ok); border-color:var(--ok);}
+
+/* ---------- portfolio ---------- */
+.pf-header{border-bottom:3px solid var(--ink); padding-bottom:.75rem; margin-bottom:1rem;}
+.pf-header .intern{font-size:1.6rem; font-weight:800; font-variation-settings:'wdth' 115;}
+.pf-header .meta{color:var(--muted); font-size:.85rem;}
+.pf-best{background:var(--gold-soft); border:1px solid var(--gold); border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.25rem;}
+.pf-best .label{font-size:.7rem; letter-spacing:.09em; text-transform:uppercase; color:#8A6800; font-weight:700;}
+.pf-best .name{font-weight:700; font-size:1.05rem;}
+
+.report-actions{display:flex; gap:.75rem; flex-wrap:wrap; margin:1rem 0 1.5rem;}
+.footer-note{color:var(--muted); font-size:.8rem; margin-top:2rem; text-align:center;}
+
+@media print{
+  header, .chips, .report-actions, .footer-note, #report-controls, #portfolio-controls, #sync-panel{display:none !important;}
+  body{background:#fff;}
+  .card{border:none; padding:.5rem 0; break-inside:avoid;}
+  main{max-width:none; padding:0;}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important; animation:none !important;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="wordmark">
+      <span class="name">emergent<em>.</em>metrics</span>
+      <span class="sub">Social media analytics workbook · H&amp;A Internship</span>
+    </div>
+    <nav aria-label="Sections">
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="calendar">Calendar</button>
+      <button data-view="log">Log data</button>
+      <button data-view="compare">Compare</button>
+      <button data-view="report">Report</button>
+      <button data-view="portfolio">Portfolio</button>
+    </nav>
+    <button class="sync-btn" id="sync-btn" aria-expanded="false">
+      <span class="dot"></span><span id="sync-label">Local only</span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+<div class="card" id="sync-panel">
+  <h3>Team sync · Google Sheet</h3>
+  <p style="font-size:.9rem; max-width:65ch; margin-bottom:.9rem;">
+    Connect a shared Google Sheet so the whole team sees the same data. Paste the web app URL
+    from your Apps Script deployment below. Setup takes about twenty minutes the first time
+    and the steps are in the README.
+  </p>
+  <div class="row" style="display:grid; grid-template-columns:1fr auto auto; gap:.75rem; align-items:end;">
+    <div style="min-width:220px;">
+      <label for="sync-url">Web app URL</label>
+      <input type="url" id="sync-url" placeholder="https://script.google.com/macros/s/…/exec">
+    </div>
+    <button class="btn small" id="sync-connect">Connect &amp; sync</button>
+    <button class="btn small ghost" id="sync-disconnect">Disconnect</button>
+  </div>
+  <p id="sync-msg">When connected, every saved entry writes to the Sheet and this browser. If the Sheet is unreachable, entries still save locally.</p>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="view-dashboard" class="view active">
+  <h2>Dashboard</h2>
+  <p class="view-intro">Trends across everything you have logged. Filter by platform to focus.</p>
+  <div class="chips" id="dash-chips" role="group" aria-label="Platform filter"></div>
+  <div class="card">
+    <h3>At a glance</h3>
+    <div class="grid-stats" id="dash-stats"></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Followers over time</h3>
+      <div class="chart-box"><canvas id="chart-followers"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Engagement rate by post</h3>
+      <div class="chart-box"><canvas id="chart-er"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Top posts by engagement rate</h3>
+    <div class="table-wrap" id="dash-top"></div>
+  </div>
+</section>
+
+<!-- ============ CALENDAR ============ -->
+<section id="view-calendar" class="view">
+  <h2>Content calendar</h2>
+  <p class="view-intro">Plan what's posting, when, and who owns it. When something goes live, mark it posted and log its metrics with one click.</p>
+
+  <div class="card">
+    <h3 id="cal-form-title">Plan a post</h3>
+    <form id="form-plan">
+      <input type="hidden" id="c-id">
+      <div class="row">
+        <div><label for="c-platform">Platform</label><select id="c-platform"></select></div>
+        <div><label for="c-date">Planned date</label><input type="date" id="c-date" required></div>
+        <div><label for="c-label">Label</label><input type="text" id="c-label" placeholder="e.g. Finals week skit" required></div>
+        <div><label for="c-format">Format</label><select id="c-format">
+          <option>Reel / Video</option><option>Carousel</option><option>Photo</option><option>Story</option><option>Text</option><option>Other</option>
+        </select></div>
+        <div><label for="c-owner">Owner</label><input type="text" id="c-owner" list="owner-list" placeholder="Intern name"></div>
+        <div><label for="c-status">Status</label><select id="c-status">
+          <option value="idea">Idea</option><option value="drafted">Drafted</option>
+          <option value="filmed">Filmed</option><option value="approved">Approved</option>
+          <option value="posted">Posted</option>
+        </select></div>
+      </div>
+      <div class="row"><div style="grid-column:1/-1"><label for="c-notes">Notes <span class="hint">(optional)</span></label><input type="text" id="c-notes" placeholder="Hook, location, collab, caption ideas…"></div></div>
+      <button type="submit" class="btn" id="c-save">Save plan</button>
+      <button type="button" class="btn ghost small" id="c-cancel" style="display:none; margin-left:.5rem;">Cancel edit</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="cal-head">
+      <button class="btn ghost small" id="cal-prev" aria-label="Previous month">‹</button>
+      <span class="month" id="cal-month"></span>
+      <button class="btn ghost small" id="cal-next" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="card">
+    <h3>All planned posts</h3>
+    <div class="table-wrap" id="plan-table"></div>
+  </div>
+</section>
+
+<!-- ============ LOG DATA ============ -->
+<section id="view-log" class="view">
+  <h2>Log data</h2>
+  <p class="view-intro">Enter numbers straight from each app's built-in insights. The engagement rate calculates as you type, so you can see exactly where the number comes from.</p>
+
+  <div class="mode-switch" role="group" aria-label="Entry type">
+    <button id="mode-post" class="on">Per-post metrics</button>
+    <button id="mode-snap">Weekly snapshot</button>
+  </div>
+
+  <div class="card" id="form-post-card">
+    <h3>New post entry</h3>
+    <form id="form-post">
+      <div class="row">
+        <div><label for="p-platform">Platform</label><select id="p-platform"></select></div>
+        <div><label for="p-date">Post date</label><input type="date" id="p-date" required></div>
+        <div><label for="p-label">Label <span class="hint">(so you can find it later)</span></label><input type="text" id="p-label" placeholder="e.g. Admitted Spartans Reel" required></div>
+        <div><label for="p-format">Format</label><select id="p-format">
+          <option>Reel / Video</option><option>Carousel</option><option>Photo</option><option>Story</option><option>Text</option><option>Other</option>
+        </select></div>
+        <div><label for="p-owner">Posted by <span class="hint">(intern)</span></label><input type="text" id="p-owner" list="owner-list" placeholder="Intern name"></div>
+      </div>
+      <datalist id="owner-list"></datalist>
+      <div class="row">
+        <div><label for="p-views">Views</label><input type="number" id="p-views" min="0" placeholder="0"></div>
+        <div><label for="p-reach">Reach <span class="hint">(accounts reached)</span></label><input type="number" id="p-reach" min="0" placeholder="0"></div>
+        <div><label for="p-likes">Likes</label><input type="number" id="p-likes" min="0" placeholder="0"></div>
+        <div><label for="p-comments">Comments</label><input type="number" id="p-comments" min="0" placeholder="0"></div>
+        <div><label for="p-shares">Shares</label><input type="number" id="p-shares" min="0" placeholder="0"></div>
+        <div><label for="p-saves">Saves</label><input type="number" id="p-saves" min="0" placeholder="0"></div>
+      </div>
+      <div class="rate-ledger" id="ledger" aria-live="polite"></div>
+      <button type="submit" class="btn">Save post</button>
+    </form>
+  </div>
+
+  <div class="card" id="form-snap-card" style="display:none">
+    <h3>New weekly snapshot</h3>
+    <form id="form-snap">
+      <div class="row">
+        <div><label for="s-platform">Platform</label><select id="s-platform"></select></div>
+        <div><label for="s-date">Week ending</label><input type="date" id="s-date" required></div>
+        <div><label for="s-followers">Followers</label><input type="number" id="s-followers" min="0" required placeholder="0"></div>
+        <div><label for="s-reach">Weekly reach</label><input type="number" id="s-reach" min="0" placeholder="0"></div>
+        <div><label for="s-visits">Profile visits</label><input type="number" id="s-visits" min="0" placeholder="0"></div>
+        <div><label for="s-posts">Posts published</label><input type="number" id="s-posts" min="0" placeholder="0"></div>
+      </div>
+      <button type="submit" class="btn">Save snapshot</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Logged posts</h3>
+    <div class="table-wrap" id="log-posts"></div>
+  </div>
+  <div class="card">
+    <h3>Logged snapshots</h3>
+    <div class="table-wrap" id="log-snaps"></div>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section id="view-compare" class="view">
+  <h2>Compare platforms</h2>
+  <p class="view-intro">Side-by-side performance. Useful for deciding where a given kind of content works hardest.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Average engagement rate</h3>
+      <div class="chart-box"><canvas id="chart-cmp-er"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Follower growth</h3>
+      <div class="chart-box"><canvas id="chart-cmp-growth"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Platform summary</h3>
+    <div class="table-wrap" id="cmp-table"></div>
+  </div>
+</section>
+
+<!-- ============ REPORT ============ -->
+<section id="view-report" class="view">
+  <h2>Report</h2>
+  <p class="view-intro">Pick a date range, review the summary, then print it or export the raw data.</p>
+  <div class="card" id="report-controls">
+    <h3>Range</h3>
+    <div class="row" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.9rem;">
+      <div><label for="r-from">From</label><input type="date" id="r-from"></div>
+      <div><label for="r-to">To</label><input type="date" id="r-to"></div>
+      <div style="align-self:end"><button class="btn small" id="r-apply">Apply range</button></div>
+    </div>
+  </div>
+  <div class="report-actions">
+    <button class="btn" id="btn-print">Print report</button>
+    <button class="btn ghost" id="btn-csv-posts">Export posts CSV</button>
+    <button class="btn ghost" id="btn-csv-snaps">Export snapshots CSV</button>
+    <button class="btn ghost" id="btn-backup">Download backup (JSON)</button>
+    <button class="btn ghost" id="btn-restore">Restore backup</button>
+    <input type="file" id="file-restore" accept=".json" style="display:none">
+  </div>
+  <div id="report-body"></div>
+</section>
+
+<!-- ============ PORTFOLIO ============ -->
+<section id="view-portfolio" class="view">
+  <h2>Portfolio</h2>
+  <p class="view-intro">Generate a one-page performance summary for an intern to keep, print, or bring to a job interview.</p>
+  <div class="card" id="portfolio-controls">
+    <h3>Build a summary</h3>
+    <div class="row" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.9rem;">
+      <div><label for="pf-owner">Intern</label><select id="pf-owner"></select></div>
+      <div><label for="pf-from">From</label><input type="date" id="pf-from"></div>
+      <div><label for="pf-to">To</label><input type="date" id="pf-to"></div>
+      <div style="align-self:end; display:flex; gap:.5rem;">
+        <button class="btn small" id="pf-generate">Generate</button>
+        <button class="btn ghost small" id="pf-print">Print</button>
+      </div>
+    </div>
+  </div>
+  <div id="pf-body"></div>
+</section>
+
+<p class="footer-note">Without team sync, data lives in this browser only. Connect a shared Google Sheet from the button in the header, or download a JSON backup regularly.</p>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+/* ---------- config ---------- */
+const PLATFORMS = {
+  instagram:{name:"Instagram", color:"#C13584", active:true},
+  tiktok:{name:"TikTok", color:"#14B8C4", active:true},
+  youtube:{name:"YouTube", color:"#C4302B", active:true},
+  linkedin:{name:"LinkedIn", color:"#0A66C2", active:true}
+};
+const KEY = "emergent-analytics-v1";
+
+/* ---------- storage ---------- */
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    return {posts:d.posts||[], snapshots:d.snapshots||[], calendar:d.calendar||[]};
+  }
+  catch(e){ return {posts:[],snapshots:[],calendar:[]}; }
+}
+function save(db){ localStorage.setItem(KEY, JSON.stringify(db)); }
+let db = load();
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const fmt = n => (n==null||isNaN(n)) ? "–" : Number(n).toLocaleString();
+const pct = n => (n==null||isNaN(n)) ? "–" : n.toFixed(1)+"%";
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function interactions(p){ return (p.likes||0)+(p.comments||0)+(p.shares||0)+(p.saves||0); }
+function erBase(p){ return p.reach>0 ? p.reach : (p.views>0 ? p.views : 0); }
+function erOf(p){ const b = erBase(p); return b>0 ? interactions(p)/b*100 : null; }
+function pill(key){
+  const pf = PLATFORMS[key];
+  return `<span class="pill"><span class="dot" style="background:${pf.color}"></span>${pf.name}</span>`;
+}
+function inRange(dateStr, from, to){
+  if(from && dateStr < from) return false;
+  if(to && dateStr > to) return false;
+  return true;
+}
+
+/* ---------- navigation ---------- */
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    $("#view-"+btn.dataset.view).classList.add("active");
+    renderAll();
+  });
+});
+
+/* ---------- platform selects & chips ---------- */
+function fillPlatformSelects(){
+  const opts = Object.entries(PLATFORMS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+  $("#p-platform").innerHTML = opts;
+  $("#s-platform").innerHTML = opts;
+  $("#c-platform").innerHTML = opts;
+}
+function owners(){
+  const names = new Set();
+  db.posts.forEach(p=>{ if(p.owner) names.add(p.owner); });
+  db.calendar.forEach(c=>{ if(c.owner) names.add(c.owner); });
+  return [...names].sort();
+}
+function refreshOwners(){
+  $("#owner-list").innerHTML = owners().map(n=>`<option value="${n}">`).join("");
+}
+let dashFilter = new Set(Object.keys(PLATFORMS));
+function renderChips(){
+  $("#dash-chips").innerHTML = Object.entries(PLATFORMS).map(([k,v])=>`
+    <button class="chip ${dashFilter.has(k)?"on":""}" data-pf="${k}" aria-pressed="${dashFilter.has(k)}">
+      <span class="dot" style="background:${v.color}"></span>${v.name}</button>`).join("");
+  document.querySelectorAll("#dash-chips .chip").forEach(c=>{
+    c.addEventListener("click", ()=>{
+      const k = c.dataset.pf;
+      dashFilter.has(k) && dashFilter.size>1 ? dashFilter.delete(k) : dashFilter.add(k);
+      renderChips(); renderDashboard();
+    });
+  });
+}
+
+/* ---------- log form modes ---------- */
+$("#mode-post").addEventListener("click", ()=>setMode("post"));
+$("#mode-snap").addEventListener("click", ()=>setMode("snap"));
+function setMode(m){
+  $("#mode-post").classList.toggle("on", m==="post");
+  $("#mode-snap").classList.toggle("on", m==="snap");
+  $("#form-post-card").style.display = m==="post" ? "" : "none";
+  $("#form-snap-card").style.display = m==="snap" ? "" : "none";
+}
+
+/* ---------- live rate ledger (signature) ---------- */
+function num(id){ const v = parseInt($(id).value,10); return isNaN(v)?0:v; }
+function renderLedger(){
+  const p = {views:num("#p-views"), reach:num("#p-reach"), likes:num("#p-likes"),
+             comments:num("#p-comments"), shares:num("#p-shares"), saves:num("#p-saves")};
+  const base = erBase(p);
+  const baseName = p.reach>0 ? "reach" : (p.views>0 ? "views" : "reach");
+  const er = erOf(p);
+  $("#ledger").innerHTML =
+    `ER <span class="op">=</span> (${fmt(p.likes)} likes <span class="op">+</span> ${fmt(p.comments)} comments `+
+    `<span class="op">+</span> ${fmt(p.shares)} shares <span class="op">+</span> ${fmt(p.saves)} saves) `+
+    `<span class="op">÷</span> ${fmt(base||0)} ${baseName} <span class="op">×</span> 100 `+
+    `<span class="op">=</span> <span class="result">${er==null?"—":pct(er)}</span>`;
+}
+["#p-views","#p-reach","#p-likes","#p-comments","#p-shares","#p-saves"].forEach(id=>{
+  $(id).addEventListener("input", renderLedger);
+});
+
+/* ---------- form submissions ---------- */
+$("#form-post").addEventListener("submit", e=>{
+  e.preventDefault();
+  const item = {
+    id:uid(), platform:$("#p-platform").value, date:$("#p-date").value,
+    label:$("#p-label").value.trim(), format:$("#p-format").value,
+    views:num("#p-views"), reach:num("#p-reach"), likes:num("#p-likes"),
+    comments:num("#p-comments"), shares:num("#p-shares"), saves:num("#p-saves"),
+    owner:$("#p-owner").value.trim()
+  };
+  db.posts.push(item);
+  save(db); e.target.reset(); renderLedger(); renderAll();
+  toast("Post saved");
+  pushRemote({action:"add", kind:"posts", item});
+});
+$("#form-snap").addEventListener("submit", e=>{
+  e.preventDefault();
+  const item = {
+    id:uid(), platform:$("#s-platform").value, date:$("#s-date").value,
+    followers:num("#s-followers"), reach:num("#s-reach"),
+    visits:num("#s-visits"), posts:num("#s-posts")
+  };
+  db.snapshots.push(item);
+  save(db); e.target.reset(); renderAll();
+  toast("Snapshot saved");
+  pushRemote({action:"add", kind:"snapshots", item});
+});
+function deleteItem(kind, id){
+  if(!confirm("Delete this entry? This cannot be undone." + (syncUrl ? " It will also be removed from the shared Sheet." : ""))) return;
+  db[kind] = db[kind].filter(x=>x.id!==id);
+  save(db); renderAll(); toast("Deleted");
+  pushRemote({action:"delete", kind, id});
+}
+
+/* ---------- log tables ---------- */
+function renderLogTables(){
+  const posts = [...db.posts].sort((a,b)=>b.date.localeCompare(a.date));
+  $("#log-posts").innerHTML = posts.length ? `<table><thead><tr>
+    <th>Date</th><th>Platform</th><th>Label</th><th>Format</th><th>By</th>
+    <th class="num">Views</th><th class="num">Reach</th><th class="num">Likes</th>
+    <th class="num">Comments</th><th class="num">Shares</th><th class="num">Saves</th>
+    <th class="num">ER</th><th></th></tr></thead><tbody>` +
+    posts.map(p=>`<tr><td>${p.date}</td><td>${pill(p.platform)}</td><td>${p.label}</td><td>${p.format}</td><td>${p.owner||"–"}</td>
+      <td class="num">${fmt(p.views)}</td><td class="num">${fmt(p.reach)}</td><td class="num">${fmt(p.likes)}</td>
+      <td class="num">${fmt(p.comments)}</td><td class="num">${fmt(p.shares)}</td><td class="num">${fmt(p.saves)}</td>
+      <td class="num">${erOf(p)==null?"–":pct(erOf(p))}</td>
+      <td><button class="btn danger" onclick="deleteItem('posts','${p.id}')">Delete</button></td></tr>`).join("")
+    + "</tbody></table>"
+  : `<div class="empty"><strong>No posts logged yet.</strong><br>Add your first post above to start building trends.</div>`;
+
+  const snaps = [...db.snapshots].sort((a,b)=>b.date.localeCompare(a.date));
+  $("#log-snaps").innerHTML = snaps.length ? `<table><thead><tr>
+    <th>Week ending</th><th>Platform</th><th class="num">Followers</th><th class="num">Weekly reach</th>
+    <th class="num">Profile visits</th><th class="num">Posts</th><th></th></tr></thead><tbody>` +
+    snaps.map(s=>`<tr><td>${s.date}</td><td>${pill(s.platform)}</td>
+      <td class="num">${fmt(s.followers)}</td><td class="num">${fmt(s.reach)}</td>
+      <td class="num">${fmt(s.visits)}</td><td class="num">${fmt(s.posts)}</td>
+      <td><button class="btn danger" onclick="deleteItem('snapshots','${s.id}')">Delete</button></td></tr>`).join("")
+    + "</tbody></table>"
+  : `<div class="empty"><strong>No snapshots yet.</strong><br>Log one snapshot per platform each week, ideally the same day every week.</div>`;
+}
+
+/* ---------- charts ---------- */
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color = "#6B7280";
+let charts = {};
+function makeChart(id, cfg){
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), cfg);
+}
+
+/* ---------- dashboard ---------- */
+function renderDashboard(){
+  const pf = [...dashFilter];
+  const posts = db.posts.filter(p=>dashFilter.has(p.platform));
+  const snaps = db.snapshots.filter(s=>dashFilter.has(s.platform));
+
+  // stats
+  const ers = posts.map(erOf).filter(v=>v!=null);
+  const avgER = ers.length ? ers.reduce((a,b)=>a+b,0)/ers.length : null;
+  const latestFollowers = {};
+  [...snaps].sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>latestFollowers[s.platform]=s.followers);
+  const totFollowers = Object.values(latestFollowers).reduce((a,b)=>a+b,0);
+  const totInteractions = posts.reduce((a,p)=>a+interactions(p),0);
+  $("#dash-stats").innerHTML = `
+    <div class="stat"><div class="label">Posts logged</div><div class="value">${fmt(posts.length)}</div></div>
+    <div class="stat"><div class="label">Avg engagement rate</div><div class="value"><span class="hl">${avgER==null?"–":pct(avgER)}</span></div></div>
+    <div class="stat"><div class="label">Total interactions</div><div class="value">${fmt(totInteractions)}</div></div>
+    <div class="stat"><div class="label">Followers (latest)</div><div class="value">${snaps.length?fmt(totFollowers):"–"}</div></div>`;
+
+  // followers chart
+  const dates = [...new Set(snaps.map(s=>s.date))].sort();
+  makeChart("chart-followers",{
+    type:"line",
+    data:{labels:dates, datasets: pf.map(k=>{
+      const rows = snaps.filter(s=>s.platform===k).sort((a,b)=>a.date.localeCompare(b.date));
+      const map = Object.fromEntries(rows.map(r=>[r.date,r.followers]));
+      return {label:PLATFORMS[k].name, data:dates.map(d=>map[d]??null),
+        borderColor:PLATFORMS[k].color, backgroundColor:PLATFORMS[k].color,
+        spanGaps:true, tension:.25, pointRadius:3};
+    }).filter(ds=>ds.data.some(v=>v!=null))},
+    options:{maintainAspectRatio:false, plugins:{legend:{position:"bottom"}}}
+  });
+
+  // ER chart
+  const sorted = [...posts].sort((a,b)=>a.date.localeCompare(b.date));
+  makeChart("chart-er",{
+    type:"scatter",
+    data:{datasets: pf.map(k=>({
+      label:PLATFORMS[k].name,
+      data:sorted.filter(p=>p.platform===k && erOf(p)!=null).map(p=>({x:p.date, y:+erOf(p).toFixed(2), label:p.label})),
+      backgroundColor:PLATFORMS[k].color, pointRadius:5
+    })).filter(ds=>ds.data.length)},
+    options:{maintainAspectRatio:false,
+      scales:{x:{type:"category", labels:[...new Set(sorted.map(p=>p.date))]},
+              y:{title:{display:true,text:"ER %"}}},
+      plugins:{legend:{position:"bottom"},
+        tooltip:{callbacks:{label:c=>`${c.raw.label}: ${c.raw.y}%`}}}}
+  });
+
+  // top posts
+  const top = [...posts].filter(p=>erOf(p)!=null).sort((a,b)=>erOf(b)-erOf(a)).slice(0,5);
+  $("#dash-top").innerHTML = top.length ? `<table><thead><tr>
+    <th>Label</th><th>Platform</th><th>Date</th><th>Format</th>
+    <th class="num">Interactions</th><th class="num">Reach/Views</th><th class="num">ER</th></tr></thead><tbody>` +
+    top.map(p=>`<tr><td>${p.label}</td><td>${pill(p.platform)}</td><td>${p.date}</td><td>${p.format}</td>
+      <td class="num">${fmt(interactions(p))}</td><td class="num">${fmt(erBase(p))}</td>
+      <td class="num"><span class="hl">${pct(erOf(p))}</span></td></tr>`).join("") + "</tbody></table>"
+  : `<div class="empty"><strong>Nothing here yet.</strong><br>Once posts are logged, your five strongest performers appear here.</div>`;
+}
+
+/* ---------- compare ---------- */
+function renderCompare(){
+  const keys = Object.keys(PLATFORMS);
+  const rows = keys.map(k=>{
+    const posts = db.posts.filter(p=>p.platform===k);
+    const snaps = db.snapshots.filter(s=>s.platform===k).sort((a,b)=>a.date.localeCompare(b.date));
+    const ers = posts.map(erOf).filter(v=>v!=null);
+    const avgER = ers.length ? ers.reduce((a,b)=>a+b,0)/ers.length : null;
+    const first = snaps[0], last = snaps[snaps.length-1];
+    const growth = (first && last && first.followers>0 && first!==last)
+      ? (last.followers-first.followers)/first.followers*100 : null;
+    return {k, posts:posts.length, avgER,
+      interactions:posts.reduce((a,p)=>a+interactions(p),0),
+      reach:posts.reduce((a,p)=>a+erBase(p),0),
+      followers:last?last.followers:null, growth,
+      growthAbs:(first&&last&&first!==last)?last.followers-first.followers:null};
+  });
+  const withData = rows.filter(r=>r.posts>0 || r.followers!=null);
+
+  makeChart("chart-cmp-er",{
+    type:"bar",
+    data:{labels:withData.map(r=>PLATFORMS[r.k].name),
+      datasets:[{data:withData.map(r=>r.avgER==null?0:+r.avgER.toFixed(2)),
+        backgroundColor:withData.map(r=>PLATFORMS[r.k].color), borderRadius:6}]},
+    options:{maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{y:{title:{display:true,text:"Avg ER %"}}}}
+  });
+  makeChart("chart-cmp-growth",{
+    type:"bar",
+    data:{labels:withData.map(r=>PLATFORMS[r.k].name),
+      datasets:[{data:withData.map(r=>r.growth==null?0:+r.growth.toFixed(2)),
+        backgroundColor:withData.map(r=>PLATFORMS[r.k].color), borderRadius:6}]},
+    options:{maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{y:{title:{display:true,text:"Follower growth % (logged range)"}}}}
+  });
+
+  $("#cmp-table").innerHTML = withData.length ? `<table><thead><tr>
+    <th>Platform</th><th class="num">Posts</th><th class="num">Avg ER</th><th class="num">Interactions</th>
+    <th class="num">Followers</th><th class="num">Growth</th></tr></thead><tbody>` +
+    withData.map(r=>`<tr><td>${pill(r.k)}</td><td class="num">${fmt(r.posts)}</td>
+      <td class="num">${r.avgER==null?"–":pct(r.avgER)}</td><td class="num">${fmt(r.interactions)}</td>
+      <td class="num">${fmt(r.followers)}</td>
+      <td class="num"><span class="delta ${r.growth>0?"up":r.growth<0?"down":""}">${r.growth==null?"–":(r.growth>0?"+":"")+r.growth.toFixed(1)+"%"}</span></td></tr>`).join("")
+    + "</tbody></table>"
+  : `<div class="empty"><strong>Nothing to compare yet.</strong><br>Log data for at least two platforms to see them side by side.</div>`;
+}
+
+/* ---------- report ---------- */
+let range = {from:"", to:""};
+$("#r-apply").addEventListener("click", ()=>{
+  range = {from:$("#r-from").value, to:$("#r-to").value};
+  renderReport(); toast("Range applied");
+});
+function renderReport(){
+  const posts = db.posts.filter(p=>inRange(p.date, range.from, range.to));
+  const snaps = db.snapshots.filter(s=>inRange(s.date, range.from, range.to));
+  const rangeLabel = (range.from||range.to) ? `${range.from||"start"} to ${range.to||"today"}` : "all logged data";
+  if(!posts.length && !snaps.length){
+    $("#report-body").innerHTML = `<div class="card"><div class="empty"><strong>No data in this range.</strong><br>Adjust the dates or log some entries first.</div></div>`;
+    return;
+  }
+  let html = `<div class="card"><h3>Summary · ${rangeLabel}</h3><div class="grid-stats">`;
+  const ers = posts.map(erOf).filter(v=>v!=null);
+  const avgER = ers.length ? ers.reduce((a,b)=>a+b,0)/ers.length : null;
+  html += `
+    <div class="stat"><div class="label">Posts</div><div class="value">${fmt(posts.length)}</div></div>
+    <div class="stat"><div class="label">Avg ER</div><div class="value"><span class="hl">${avgER==null?"–":pct(avgER)}</span></div></div>
+    <div class="stat"><div class="label">Interactions</div><div class="value">${fmt(posts.reduce((a,p)=>a+interactions(p),0))}</div></div>
+    <div class="stat"><div class="label">Reach logged</div><div class="value">${fmt(posts.reduce((a,p)=>a+erBase(p),0))}</div></div>
+  </div></div>`;
+
+  Object.keys(PLATFORMS).forEach(k=>{
+    const pp = posts.filter(p=>p.platform===k);
+    const ss = snaps.filter(s=>s.platform===k).sort((a,b)=>a.date.localeCompare(b.date));
+    if(!pp.length && !ss.length) return;
+    const pers = pp.map(erOf).filter(v=>v!=null);
+    const pAvg = pers.length ? pers.reduce((a,b)=>a+b,0)/pers.length : null;
+    const best = [...pp].filter(p=>erOf(p)!=null).sort((a,b)=>erOf(b)-erOf(a))[0];
+    const first = ss[0], last = ss[ss.length-1];
+    html += `<div class="card"><h3>${PLATFORMS[k].name}</h3><div class="grid-stats">
+      <div class="stat"><div class="label">Posts</div><div class="value">${fmt(pp.length)}</div></div>
+      <div class="stat"><div class="label">Avg ER</div><div class="value">${pAvg==null?"–":pct(pAvg)}</div></div>
+      <div class="stat"><div class="label">Followers change</div><div class="value">${(first&&last&&first!==last)?((last.followers-first.followers>=0?"+":"")+fmt(last.followers-first.followers)):"–"}</div></div>
+      <div class="stat"><div class="label">Best post</div><div class="value" style="font-size:1rem; font-family:'Archivo'">${best?`${best.label} (${pct(erOf(best))})`:"–"}</div></div>
+    </div></div>`;
+  });
+  $("#report-body").innerHTML = html;
+}
+
+/* ---------- exports ---------- */
+function download(name, text, type){
+  const blob = new Blob([text],{type});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function csvEscape(v){ v = String(v??""); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+$("#btn-csv-posts").addEventListener("click", ()=>{
+  const head = ["date","platform","label","format","owner","views","reach","likes","comments","shares","saves","engagement_rate_pct"];
+  const rows = db.posts.map(p=>[p.date,p.platform,p.label,p.format,p.owner||"",p.views,p.reach,p.likes,p.comments,p.shares,p.saves,
+    erOf(p)==null?"":erOf(p).toFixed(2)].map(csvEscape).join(","));
+  download("emergent-posts.csv",[head.join(","),...rows].join("\n"),"text/csv");
+  toast("Posts CSV downloaded");
+});
+$("#btn-csv-snaps").addEventListener("click", ()=>{
+  const head = ["week_ending","platform","followers","weekly_reach","profile_visits","posts_published"];
+  const rows = db.snapshots.map(s=>[s.date,s.platform,s.followers,s.reach,s.visits,s.posts].map(csvEscape).join(","));
+  download("emergent-snapshots.csv",[head.join(","),...rows].join("\n"),"text/csv");
+  toast("Snapshots CSV downloaded");
+});
+$("#btn-backup").addEventListener("click", ()=>{
+  download("emergent-backup-"+new Date().toISOString().slice(0,10)+".json", JSON.stringify(db,null,2), "application/json");
+  toast("Backup downloaded");
+});
+$("#btn-restore").addEventListener("click", ()=>$("#file-restore").click());
+$("#file-restore").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!Array.isArray(data.posts) || !Array.isArray(data.snapshots)) throw new Error("bad shape");
+      data.calendar = Array.isArray(data.calendar) ? data.calendar : [];
+      if(!confirm("Replace all current data with this backup?")) return;
+      db = data; save(db); renderAll(); toast("Backup restored");
+      if(syncUrl && confirm("Also replace the shared Google Sheet with this backup? Everyone on the team will see the restored data.")){
+        pushRemote({action:"replaceAll", data:db});
+      }
+    }catch(err){ toast("That file is not a valid backup"); }
+  };
+  r.readAsText(f);
+  e.target.value = "";
+});
+$("#btn-print").addEventListener("click", ()=>window.print());
+
+/* ---------- content calendar ---------- */
+const STATUSES = ["idea","drafted","filmed","approved","posted"];
+const STATUS_LABELS = {idea:"Idea", drafted:"Drafted", filmed:"Filmed", approved:"Approved", posted:"Posted"};
+let calMonth = new Date(); calMonth.setDate(1);
+
+$("#form-plan").addEventListener("submit", e=>{
+  e.preventDefault();
+  const editingId = $("#c-id").value;
+  const item = {
+    id: editingId || uid(),
+    platform:$("#c-platform").value, date:$("#c-date").value,
+    label:$("#c-label").value.trim(), format:$("#c-format").value,
+    owner:$("#c-owner").value.trim(), status:$("#c-status").value,
+    notes:$("#c-notes").value.trim()
+  };
+  if(editingId){
+    db.calendar = db.calendar.map(c=>c.id===editingId ? item : c);
+    pushRemote({action:"update", kind:"calendar", item});
+    toast("Plan updated");
+  }else{
+    db.calendar.push(item);
+    pushRemote({action:"add", kind:"calendar", item});
+    toast("Plan saved");
+  }
+  save(db); resetPlanForm(); renderAll();
+});
+function resetPlanForm(){
+  $("#form-plan").reset();
+  $("#c-id").value = "";
+  $("#c-date").valueAsDate = new Date();
+  $("#cal-form-title").textContent = "Plan a post";
+  $("#c-save").textContent = "Save plan";
+  $("#c-cancel").style.display = "none";
+}
+$("#c-cancel").addEventListener("click", resetPlanForm);
+function editPlan(id){
+  const c = db.calendar.find(x=>x.id===id); if(!c) return;
+  $("#c-id").value = c.id; $("#c-platform").value = c.platform;
+  $("#c-date").value = c.date; $("#c-label").value = c.label;
+  $("#c-format").value = c.format; $("#c-owner").value = c.owner||"";
+  $("#c-status").value = c.status; $("#c-notes").value = c.notes||"";
+  $("#cal-form-title").textContent = "Edit plan";
+  $("#c-save").textContent = "Update plan";
+  $("#c-cancel").style.display = "";
+  $("#c-label").focus();
+}
+function setPlanStatus(id, status){
+  const c = db.calendar.find(x=>x.id===id); if(!c) return;
+  c.status = status;
+  save(db); renderAll();
+  pushRemote({action:"update", kind:"calendar", item:c});
+}
+function logFromPlan(id){
+  const c = db.calendar.find(x=>x.id===id); if(!c) return;
+  document.querySelector('nav button[data-view="log"]').click();
+  setMode("post");
+  $("#p-platform").value = c.platform;
+  $("#p-date").value = c.date;
+  $("#p-label").value = c.label;
+  $("#p-format").value = c.format;
+  $("#p-owner").value = c.owner||"";
+  $("#p-views").focus();
+  toast("Details filled in. Add the numbers from the app's insights.");
+}
+
+$("#cal-prev").addEventListener("click", ()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); });
+$("#cal-next").addEventListener("click", ()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); });
+
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function renderCalendar(){
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  $("#cal-month").textContent = calMonth.toLocaleDateString("en-US",{month:"long", year:"numeric"});
+  const first = new Date(y,m,1), days = new Date(y,m+1,0).getDate();
+  const todayStr = ymd(new Date());
+  let html = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  for(let i=0;i<first.getDay();i++) html += `<div class="cal-cell blank"></div>`;
+  for(let d=1;d<=days;d++){
+    const dateStr = ymd(new Date(y,m,d));
+    const items = db.calendar.filter(c=>c.date===dateStr);
+    html += `<div class="cal-cell ${dateStr===todayStr?"today":""}"><span class="d">${d}</span>` +
+      items.map(c=>`<button class="cal-item" style="background:${PLATFORMS[c.platform]?.color||"#888"}"
+        onclick="editPlan('${c.id}')" title="${STATUS_LABELS[c.status]}${c.owner?" · "+c.owner:""}${c.notes?" · "+c.notes.replace(/"/g,"&quot;"):""}">${c.status==="posted"?"✓ ":""}${c.label}</button>`).join("")
+      + `</div>`;
+  }
+  $("#cal-grid").innerHTML = html;
+}
+function renderPlanTable(){
+  const items = [...db.calendar].sort((a,b)=>a.date.localeCompare(b.date));
+  $("#plan-table").innerHTML = items.length ? `<table><thead><tr>
+    <th>Date</th><th>Platform</th><th>Label</th><th>Format</th><th>Owner</th><th>Status</th><th></th><th></th></tr></thead><tbody>` +
+    items.map(c=>`<tr>
+      <td>${c.date}</td><td>${pill(c.platform)}</td><td>${c.label}</td><td>${c.format}</td><td>${c.owner||"–"}</td>
+      <td><select onchange="setPlanStatus('${c.id}', this.value)" aria-label="Status for ${c.label}" style="width:auto; font-size:.82rem; padding:.25rem .4rem;">
+        ${STATUSES.map(s=>`<option value="${s}" ${c.status===s?"selected":""}>${STATUS_LABELS[s]}</option>`).join("")}
+      </select></td>
+      <td>${c.status==="posted" ? `<button class="btn small ghost" onclick="logFromPlan('${c.id}')">Log metrics</button>` : ""}</td>
+      <td><button class="btn danger" onclick="deleteItem('calendar','${c.id}')">Delete</button></td></tr>`).join("")
+    + "</tbody></table>"
+  : `<div class="empty"><strong>Nothing planned yet.</strong><br>Add the next round of workshop posts above and they'll appear on the calendar.</div>`;
+}
+
+/* ---------- portfolio ---------- */
+function fillPortfolioOwners(){
+  const list = owners();
+  const cur = $("#pf-owner").value;
+  $("#pf-owner").innerHTML = list.length
+    ? list.map(n=>`<option value="${n}">${n}</option>`).join("")
+    : `<option value="">No interns yet</option>`;
+  if(list.includes(cur)) $("#pf-owner").value = cur;
+}
+$("#pf-generate").addEventListener("click", renderPortfolio);
+$("#pf-print").addEventListener("click", ()=>{
+  if(!$("#pf-body").innerHTML.trim()) renderPortfolio();
+  window.print();
+});
+function renderPortfolio(){
+  const name = $("#pf-owner").value;
+  const from = $("#pf-from").value, to = $("#pf-to").value;
+  if(!name){
+    $("#pf-body").innerHTML = `<div class="card"><div class="empty"><strong>No intern selected.</strong><br>Portfolios pull from the "Posted by" field on logged posts, so log some posts with owners first.</div></div>`;
+    return;
+  }
+  const posts = db.posts.filter(p=>p.owner===name && inRange(p.date, from, to))
+                        .sort((a,b)=>a.date.localeCompare(b.date));
+  if(!posts.length){
+    $("#pf-body").innerHTML = `<div class="card"><div class="empty"><strong>No logged posts for ${name} in this range.</strong><br>Check the dates, or log their posts with the "Posted by" field filled in.</div></div>`;
+    return;
+  }
+  const ers = posts.map(erOf).filter(v=>v!=null);
+  const avgER = ers.length ? ers.reduce((a,b)=>a+b,0)/ers.length : null;
+  const totalReach = posts.reduce((a,p)=>a+erBase(p),0);
+  const totalInt = posts.reduce((a,p)=>a+interactions(p),0);
+  const best = [...posts].filter(p=>erOf(p)!=null).sort((a,b)=>erOf(b)-erOf(a))[0];
+  const platformsUsed = [...new Set(posts.map(p=>PLATFORMS[p.platform].name))].join(", ");
+  const formats = {};
+  posts.forEach(p=>{ formats[p.format] = (formats[p.format]||0)+1; });
+  const formatLine = Object.entries(formats).map(([f,n])=>`${n} ${f}`).join(", ");
+  const rangeLabel = (from||to) ? `${from||"start"} to ${to||"present"}` : "full internship";
+
+  $("#pf-body").innerHTML = `<div class="card">
+    <div class="pf-header">
+      <div class="intern">${name}</div>
+      <div class="meta">Social Media Intern · @emergent.sjsu · College of Humanities and the Arts, SJSU · ${rangeLabel}</div>
+    </div>
+    <div class="grid-stats" style="margin-bottom:1.25rem;">
+      <div class="stat"><div class="label">Posts published</div><div class="value">${fmt(posts.length)}</div></div>
+      <div class="stat"><div class="label">Avg engagement rate</div><div class="value"><span class="hl">${avgER==null?"–":pct(avgER)}</span></div></div>
+      <div class="stat"><div class="label">Total interactions</div><div class="value">${fmt(totalInt)}</div></div>
+      <div class="stat"><div class="label">Accounts reached</div><div class="value">${fmt(totalReach)}</div></div>
+    </div>
+    ${best ? `<div class="pf-best"><div class="label">Strongest post</div>
+      <div class="name">${best.label}</div>
+      <div style="font-size:.88rem;">${PLATFORMS[best.platform].name} ${best.format}, ${best.date}. Reached ${fmt(erBase(best))} accounts with ${fmt(interactions(best))} interactions, a ${pct(erOf(best))} engagement rate.</div></div>` : ""}
+    <p style="font-size:.9rem; margin-bottom:1rem;">Content created across ${platformsUsed}: ${formatLine}.</p>
+    <div class="table-wrap"><table><thead><tr>
+      <th>Date</th><th>Platform</th><th>Post</th><th>Format</th>
+      <th class="num">Reach/Views</th><th class="num">Interactions</th><th class="num">ER</th></tr></thead><tbody>` +
+      posts.map(p=>`<tr><td>${p.date}</td><td>${pill(p.platform)}</td><td>${p.label}</td><td>${p.format}</td>
+        <td class="num">${fmt(erBase(p))}</td><td class="num">${fmt(interactions(p))}</td>
+        <td class="num">${erOf(p)==null?"–":pct(erOf(p))}</td></tr>`).join("") +
+    `</tbody></table></div>
+    <p style="font-size:.75rem; color:var(--muted); margin-top:1rem;">Metrics recorded by the intern team from platform insights. Generated ${new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}.</p>
+  </div>`;
+}
+
+/* ---------- google sheet sync ---------- */
+const SYNC_KEY = "emergent-sync-url";
+let syncUrl = localStorage.getItem(SYNC_KEY) || "";
+
+function setSync(state, label){
+  const btn = $("#sync-btn");
+  btn.classList.remove("ok","err","busy");
+  if(state !== "off") btn.classList.add(state);
+  $("#sync-label").textContent = label;
+}
+async function remoteGet(){
+  const res = await fetch(syncUrl);
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || "Bad response");
+  return data;
+}
+async function remotePost(payload){
+  /* body sent as plain text so the request avoids a CORS preflight,
+     which Apps Script web apps cannot answer */
+  const res = await fetch(syncUrl, {method:"POST", body:JSON.stringify(payload)});
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || "Bad response");
+}
+function pushRemote(payload){
+  if(!syncUrl) return;
+  setSync("busy","Syncing…");
+  remotePost(payload)
+    .then(()=>setSync("ok","Synced"))
+    .catch(()=>{
+      setSync("err","Sync failed");
+      toast("Saved in this browser, but the Sheet could not be reached");
+    });
+}
+function mergeById(localArr, remoteArr){
+  const seen = new Set(remoteArr.map(x=>x.id));
+  const localOnly = localArr.filter(x=>!seen.has(x.id));
+  return {merged:[...remoteArr, ...localOnly], localOnly};
+}
+async function fullSync(){
+  if(!syncUrl){ setSync("off","Local only"); return; }
+  setSync("busy","Syncing…");
+  try{
+    const remote = await remoteGet();
+    const p = mergeById(db.posts, remote.posts || []);
+    const s = mergeById(db.snapshots, remote.snapshots || []);
+    const c = mergeById(db.calendar, remote.calendar || []);
+    db = {posts:p.merged, snapshots:s.merged, calendar:c.merged};
+    save(db); renderAll();
+    if(p.localOnly.length || s.localOnly.length || c.localOnly.length){
+      await remotePost({action:"bulkAdd", posts:p.localOnly, snapshots:s.localOnly, calendar:c.localOnly});
+    }
+    setSync("ok","Synced");
+  }catch(e){
+    setSync("err","Sync failed");
+    toast("Could not reach the Sheet. Working from this browser's data.");
+  }
+}
+$("#sync-btn").addEventListener("click", ()=>{
+  const panel = $("#sync-panel");
+  const open = panel.classList.toggle("open");
+  $("#sync-btn").setAttribute("aria-expanded", open);
+  if(open){ if(panel.scrollIntoView) panel.scrollIntoView({behavior:"smooth", block:"start"}); $("#sync-url").focus(); }
+});
+$("#sync-connect").addEventListener("click", ()=>{
+  const url = $("#sync-url").value.trim();
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){
+    toast("That doesn't look like an Apps Script web app URL ending in /exec");
+    return;
+  }
+  syncUrl = url; localStorage.setItem(SYNC_KEY, url);
+  fullSync();
+});
+$("#sync-disconnect").addEventListener("click", ()=>{
+  syncUrl = ""; localStorage.removeItem(SYNC_KEY);
+  setSync("off","Local only");
+  toast("Disconnected. Data stays in this browser only.");
+});
+
+/* ---------- init ---------- */
+function renderAll(){
+  refreshOwners(); fillPortfolioOwners();
+  renderChips(); renderDashboard(); renderLogTables();
+  renderCalendar(); renderPlanTable(); renderCompare(); renderReport();
+}
+fillPlatformSelects();
+$("#p-date").valueAsDate = new Date();
+$("#s-date").valueAsDate = new Date();
+$("#c-date").valueAsDate = new Date();
+renderLedger();
+renderAll();
+$("#sync-url").value = syncUrl;
+fullSync();
+</script>
+</body>
+</html>
